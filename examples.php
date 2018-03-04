@@ -51,6 +51,7 @@ function f4d_alter_woocommerce_payment_gateways(){
 		}
 	}
 }
+// Unset specific payment gateway
 function f4d_unset_specific_payment_gateways( $available_gateways ) {
 	foreach($available_gateways as $k => $v){
 		if($k!='phone_manual_on_hold'){
@@ -72,5 +73,46 @@ function f4d_is_request($type){
 			return defined( 'DOING_CRON' );
 		case 'frontend' :
 			return (!is_admin() || defined('DOING_AJAX')) && ! defined('DOING_CRON');
+	}
+}
+
+// Trigger specific emails after an order was processed
+add_action( 'woocommerce_checkout_order_processed', 'f4d_order_processed', 10, 2);
+function f4d_order_processed( $order_id, $posted_data ) {
+
+	$order = new WC_Order($order_id);
+
+	// Send email
+	$mailer = WC()->mailer();
+	$mails = $mailer->get_emails();
+	if ( ! empty( $mails ) ) {
+	    foreach ( $mails as $mail ) {
+	    	//new_order
+	    	//cancelled_order
+	    	//customer_processing_order
+	    	//customer_completed_order
+	    	//customer_invoice
+	    	//customer_refunded_order
+	    	if( ($mail->id=='new_order') || ($mail->id=='customer_invoice') ) {
+	        	$mail->trigger( $order->id );
+	        }
+	     }
+	}
+
+	// Get redirect URL
+	// This will generates a URL for the thanks page (order received)
+	$return_url = $order->get_checkout_order_received_url();
+
+	// Redirect to success/confirmation/payment page
+	if ( is_ajax() ) {
+		wp_send_json( array(
+			'result' 	=> 'success',
+			'redirect'  => apply_filters( 'woocommerce_checkout_no_payment_needed_redirect', $return_url, $order )
+		) );
+	} else {
+		wp_safe_redirect(
+			apply_filters( 'woocommerce_checkout_no_payment_needed_redirect', $return_url, $order )
+		);
+		exit;
 	}
 }
