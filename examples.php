@@ -23,9 +23,11 @@ add_filter( 'woocommerce_available_payment_gateways', 'f4d_unset_specific_paymen
 add_action('wp', 'f4d_alter_woocommerce_payment_gateways');
 function f4d_alter_woocommerce_payment_gateways(){
 	$post_id = get_the_ID();
-	if($post_id==49){
+	if($post_id==2441){ // replace with current page ID, or do different if statement
+		// Enable need for payment
+		add_filter( 'woocommerce_cart_needs_payment', '__return_true' );
 		// Remove all methods except "Phone manual on hold" method
-		add_filter( 'woocommerce_available_payment_gateways', 'f4d_unset_specific_payment_gateways' );
+		add_filter( 'woocommerce_available_payment_gateways', 'f4d_unset_gateway_by_category' );
 	}else{
 		if( f4d_is_request('ajax') ) {
 
@@ -39,8 +41,10 @@ function f4d_alter_woocommerce_payment_gateways(){
 			// determine on what page the Ajax request was made 
 			parse_str($_POST['post_data'], $output);
 			if( basename( $output['_wp_http_referer'] ) == 'orderbevestiging' ){
+				// Enable need for payment
+				add_filter( 'woocommerce_cart_needs_payment', '__return_true' );
 				// Remove all methods except "Phone manual on hold" method
-				add_filter( 'woocommerce_available_payment_gateways', 'f4d_unset_specific_payment_gateways' );
+				add_filter( 'woocommerce_available_payment_gateways', 'f4d_unset_gateway_by_category' );
 			}else{
 				// Disable need for payment
 				add_filter( 'woocommerce_cart_needs_payment', '__return_false' );
@@ -51,8 +55,7 @@ function f4d_alter_woocommerce_payment_gateways(){
 		}
 	}
 }
-// Unset specific payment gateway
-function f4d_unset_specific_payment_gateways( $available_gateways ) {
+function f4d_unset_gateway_by_category( $available_gateways ) {
 	foreach($available_gateways as $k => $v){
 		if($k!='phone_manual_on_hold'){
 			unset($available_gateways[$k]);
