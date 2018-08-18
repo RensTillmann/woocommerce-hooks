@@ -1,4 +1,27 @@
 <?php
+// Hide other shipping methods if free shipping is available.
+// Also keep "local pickup" as an option to choose from
+add_filter( 'woocommerce_package_rates', 'f4d_hide_shipping_when_free_available', 10, 2 ); 
+function f4d_hide_shipping_when_free_available($rates, $package){
+    $new_rates = array();
+    foreach($rates as $rate_id => $rate){
+        if('free_shipping'===$rate->method_id){
+            $new_rates[ $rate_id ] = $rate;
+            break;
+        }
+    }
+    if(!empty($new_rates)){
+        foreach ($rates as $rate_id => $rate){
+            if('local_pickup'===$rate->method_id){
+                $new_rates[ $rate_id ] = $rate;
+                break;
+            }
+        }
+        return $new_rates;
+    }
+    return $rates;
+}
+
 // Block none logged in users from visiting WC pages such as shop/categories/products etc. except My Account page
 // For a full list of conditional tags that you can use with WooCommerce visit:
 // https://docs.woocommerce.com/document/conditional-tags/
