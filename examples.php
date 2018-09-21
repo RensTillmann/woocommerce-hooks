@@ -1,4 +1,22 @@
 <?php
+// Only search for WooCommerce Products and Posts
+add_action( 'pre_get_posts', 'f4d_search_woocommerce_only' );
+function f4d_search_woocommerce_only( $query ) {
+    if( !is_admin() && is_search() && $query->is_main_query() ) {
+        $query->set('post_type', array( 'product', 'post' ) );
+    }
+}
+
+// Alter Avia (ENFOLD theme) search query
+add_filter('avf_ajax_search_query', 'f4d_alter_avia_search_query', 10, 1);
+function f4d_alter_avia_search_query($search_parameters){
+    parse_str($search_parameters, $output);
+    $output['post_type'] = array( 'product', 'post' );
+    return http_build_query($output);
+    //$defaults = array('numberposts' => 5, 'post_type' => 'any', 'post_status' => 'publish', 'post_password' => '', 'suppress_filters' => false, 'results_hide_fields' => '');
+}
+
+
 // Hide other shipping methods if free shipping is available.
 // Also keep "local pickup" as an option to choose from
 add_filter( 'woocommerce_package_rates', 'f4d_hide_shipping_when_free_available', 10, 2 ); 
